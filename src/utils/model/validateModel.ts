@@ -27,6 +27,12 @@ export async function validateModel(
     return { valid: false, error: 'Model name cannot be empty' }
   }
 
+  // For OpenAI-compatible providers, accept any model name without an API
+  // round-trip.  The provider itself will reject unknown models at call time.
+  if (getAPIProvider() === 'openai') {
+    return { valid: true }
+  }
+
   // Check against availableModels allowlist before any API call
   if (!isModelAllowed(normalizedModel)) {
     return {

@@ -6,6 +6,8 @@ describe("getAPIProvider", () => {
     "CLAUDE_CODE_USE_BEDROCK",
     "CLAUDE_CODE_USE_VERTEX",
     "CLAUDE_CODE_USE_FOUNDRY",
+    "OPENAI_API_KEY",
+    "OPENAI_BASE_URL",
   ] as const;
   const savedEnv: Record<string, string | undefined> = {};
 
@@ -27,6 +29,8 @@ describe("getAPIProvider", () => {
     delete process.env.CLAUDE_CODE_USE_BEDROCK;
     delete process.env.CLAUDE_CODE_USE_VERTEX;
     delete process.env.CLAUDE_CODE_USE_FOUNDRY;
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_BASE_URL;
     expect(getAPIProvider()).toBe("firstParty");
   });
 
@@ -64,15 +68,127 @@ describe("getAPIProvider", () => {
   });
 
   test('"0" is not truthy', () => {
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_BASE_URL;
     process.env.CLAUDE_CODE_USE_BEDROCK = "0";
     expect(getAPIProvider()).toBe("firstParty");
   });
 
   test('empty string is not truthy', () => {
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_BASE_URL;
     process.env.CLAUDE_CODE_USE_BEDROCK = "";
     expect(getAPIProvider()).toBe("firstParty");
   });
+
+  // OpenAI-compatible provider tests
+  test('returns "openai" when OPENAI_API_KEY is set', () => {
+    delete process.env.CLAUDE_CODE_USE_BEDROCK;
+    delete process.env.CLAUDE_CODE_USE_VERTEX;
+    delete process.env.CLAUDE_CODE_USE_FOUNDRY;
+    process.env.OPENAI_API_KEY = "sk-test-key";
+    expect(getAPIProvider()).toBe("openai");
+  });
+
+  test('returns "openai" when OPENAI_BASE_URL is set', () => {
+    delete process.env.CLAUDE_CODE_USE_BEDROCK;
+    delete process.env.CLAUDE_CODE_USE_VERTEX;
+    delete process.env.CLAUDE_CODE_USE_FOUNDRY;
+    delete process.env.OPENAI_API_KEY;
+    process.env.OPENAI_BASE_URL = "https://api.chatanywhere.tech/v1";
+    expect(getAPIProvider()).toBe("openai");
+  });
+
+  test('returns "openai" when both OPENAI_API_KEY and OPENAI_BASE_URL are set', () => {
+    delete process.env.CLAUDE_CODE_USE_BEDROCK;
+    delete process.env.CLAUDE_CODE_USE_VERTEX;
+    delete process.env.CLAUDE_CODE_USE_FOUNDRY;
+    process.env.OPENAI_API_KEY = "sk-test-key";
+    process.env.OPENAI_BASE_URL = "https://api.chatanywhere.tech/v1";
+    expect(getAPIProvider()).toBe("openai");
+  });
+
+  test("bedrock takes precedence over openai", () => {
+    process.env.CLAUDE_CODE_USE_BEDROCK = "1";
+    process.env.OPENAI_API_KEY = "sk-test-key";
+    expect(getAPIProvider()).toBe("bedrock");
+  });
+
+  test("vertex takes precedence over openai", () => {
+    delete process.env.CLAUDE_CODE_USE_BEDROCK;
+    process.env.CLAUDE_CODE_USE_VERTEX = "1";
+    process.env.OPENAI_API_KEY = "sk-test-key";
+    expect(getAPIProvider()).toBe("vertex");
+  });
+
+  test("foundry takes precedence over openai", () => {
+    delete process.env.CLAUDE_CODE_USE_BEDROCK;
+    delete process.env.CLAUDE_CODE_USE_VERTEX;
+    process.env.CLAUDE_CODE_USE_FOUNDRY = "1";
+    process.env.OPENAI_API_KEY = "sk-test-key";
+    expect(getAPIProvider()).toBe("foundry");
+  });
 });
+
+describe("isFirstPartyAnthropicBaseUrl", () => {
+  const originalBaseUrl = process.env.ANTHROPIC_BASE_URL;
+  const originalUserType = process.env.USER_TYPE;
+
+  afterEach(() => {
+    if (originalBaseUrl !== undefined) {
+      process.env.ANTHROPIC_BASE_URL = originalBaseUrl;
+    } else {
+      delete process.env.ANTHROPIC_BASE_URL;
+    }
+    if (originalUserType !== undefined) {
+      process.env.USER_TYPE = originalUserType;
+    } else {
+      delete process.env.USER_TYPE;
+    }
+  });
+
+  test("returns true when ANTHROPIC_BASE_URL is not set", () => {
+    delete process.env.ANTHROPIC_BASE_URL;
+    expect(isFirstPartyAnthropicBaseUrl()).toBe(true);
+  });
+
+  test("returns true for api.anthropic.com", () => {
+    process.env.ANTHROPIC_BASE_URL = "https://api.anthropic.com";
+    expect(isFirstPartyAnthropicBaseUrl()).toBe(true);
+  });
+
+  test("returns false for custom URL", () => {
+    process.env.ANTHROPIC_BASE_URL = "https://my-proxy.com";
+    expect(isFirstPartyAnthropicBaseUrl()).toBe(false);
+  });
+
+  test("returns false for invalid URL", () => {
+    process.env.ANTHROPIC_BASE_URL = "not-a-url";
+    expect(isFirstPartyAnthropicBaseUrl()).toBe(false);
+  });
+
+  test("returns true for staging URL when USER_TYPE is ant", () => {
+    process.env.ANTHROPIC_BASE_URL = "https://api-staging.anthropic.com";
+    process.env.USER_TYPE = "ant";
+    expect(isFirstPartyAnthropicBaseUrl()).toBe(true);
+  });
+
+  test("returns true for URL with path", () => {
+    process.env.ANTHROPIC_BASE_URL = "https://api.anthropic.com/v1";
+    expect(isFirstPartyAnthropicBaseUrl()).toBe(true);
+  });
+
+  test("returns true for trailing slash", () => {
+    process.env.ANTHROPIC_BASE_URL = "https://api.anthropic.com/";
+    expect(isFirstPartyAnthropicBaseUrl()).toBe(true);
+  });
+
+  test("returns false for subdomain attack", () => {
+    process.env.ANTHROPIC_BASE_URL = "https://evil-api.anthropic.com";
+    expect(isFirstPartyAnthropicBaseUrl()).toBe(false);
+  });
+});
+
 
 describe("isFirstPartyAnthropicBaseUrl", () => {
   const originalBaseUrl = process.env.ANTHROPIC_BASE_URL;

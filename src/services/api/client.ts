@@ -16,6 +16,7 @@ import {
   getAPIProvider,
   isFirstPartyAnthropicBaseUrl,
 } from 'src/utils/model/providers.js'
+import { createOpenAICompatibleClient } from './openai-adapter.js'
 import { getProxyFetchOptions } from 'src/utils/proxy.js'
 import {
   getIsNonInteractiveSession,
@@ -150,6 +151,18 @@ export async function getAnthropicClient({
       fetch: resolvedFetch,
     }),
   }
+
+  // OpenAI-compatible provider (detected via OPENAI_API_KEY / OPENAI_BASE_URL)
+  if (getAPIProvider() === 'openai') {
+    const oaiBaseURL =
+      process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1'
+    const oaiApiKey = process.env.OPENAI_API_KEY || ''
+    logForDebugging(
+      `[API:openai] Using OpenAI-compatible endpoint: ${oaiBaseURL}`,
+    )
+    return createOpenAICompatibleClient(oaiBaseURL, oaiApiKey)
+  }
+
   if (isEnvTruthy(process.env.CLAUDE_CODE_USE_BEDROCK)) {
     const { AnthropicBedrock } = await import('@anthropic-ai/bedrock-sdk')
     // Use region override for small fast model if specified
