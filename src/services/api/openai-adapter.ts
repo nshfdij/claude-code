@@ -664,6 +664,11 @@ export function createOpenAICompatibleClient(
     Authorization: `Bearer ${apiKey}`,
   }
 
+  // `any` return type is intentional: this function duck-types the
+  // `Anthropic.Beta.Messages.create()` method, which returns different shapes
+  // depending on `params.stream`.  The call sites in claude.ts cast the result
+  // to the expected type anyway, so strict typing here adds no safety benefit.
+  // biome-ignore lint/suspicious/noExplicitAny: duck-typed Anthropic SDK shim
   function create(params: Record<string, unknown>, options?: { signal?: AbortSignal }): any {
     const { stream: wantStream = false, ...rest } = params
     const oaiRequest = buildOAIRequest(rest)
