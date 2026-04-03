@@ -6,6 +6,8 @@ describe("getAPIProvider", () => {
     "CLAUDE_CODE_USE_BEDROCK",
     "CLAUDE_CODE_USE_VERTEX",
     "CLAUDE_CODE_USE_FOUNDRY",
+    "OPENAI_API_KEY",
+    "OPENAI_BASE_URL",
   ] as const;
   const savedEnv: Record<string, string | undefined> = {};
 
@@ -27,6 +29,8 @@ describe("getAPIProvider", () => {
     delete process.env.CLAUDE_CODE_USE_BEDROCK;
     delete process.env.CLAUDE_CODE_USE_VERTEX;
     delete process.env.CLAUDE_CODE_USE_FOUNDRY;
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_BASE_URL;
     expect(getAPIProvider()).toBe("firstParty");
   });
 
@@ -64,13 +68,65 @@ describe("getAPIProvider", () => {
   });
 
   test('"0" is not truthy', () => {
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_BASE_URL;
     process.env.CLAUDE_CODE_USE_BEDROCK = "0";
     expect(getAPIProvider()).toBe("firstParty");
   });
 
   test('empty string is not truthy', () => {
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_BASE_URL;
     process.env.CLAUDE_CODE_USE_BEDROCK = "";
     expect(getAPIProvider()).toBe("firstParty");
+  });
+
+  // OpenAI-compatible provider tests
+  test('returns "openai" when OPENAI_API_KEY is set', () => {
+    delete process.env.CLAUDE_CODE_USE_BEDROCK;
+    delete process.env.CLAUDE_CODE_USE_VERTEX;
+    delete process.env.CLAUDE_CODE_USE_FOUNDRY;
+    process.env.OPENAI_API_KEY = "sk-test-key";
+    expect(getAPIProvider()).toBe("openai");
+  });
+
+  test('returns "openai" when OPENAI_BASE_URL is set', () => {
+    delete process.env.CLAUDE_CODE_USE_BEDROCK;
+    delete process.env.CLAUDE_CODE_USE_VERTEX;
+    delete process.env.CLAUDE_CODE_USE_FOUNDRY;
+    delete process.env.OPENAI_API_KEY;
+    process.env.OPENAI_BASE_URL = "https://api.chatanywhere.tech/v1";
+    expect(getAPIProvider()).toBe("openai");
+  });
+
+  test('returns "openai" when both OPENAI_API_KEY and OPENAI_BASE_URL are set', () => {
+    delete process.env.CLAUDE_CODE_USE_BEDROCK;
+    delete process.env.CLAUDE_CODE_USE_VERTEX;
+    delete process.env.CLAUDE_CODE_USE_FOUNDRY;
+    process.env.OPENAI_API_KEY = "sk-test-key";
+    process.env.OPENAI_BASE_URL = "https://api.chatanywhere.tech/v1";
+    expect(getAPIProvider()).toBe("openai");
+  });
+
+  test("bedrock takes precedence over openai", () => {
+    process.env.CLAUDE_CODE_USE_BEDROCK = "1";
+    process.env.OPENAI_API_KEY = "sk-test-key";
+    expect(getAPIProvider()).toBe("bedrock");
+  });
+
+  test("vertex takes precedence over openai", () => {
+    delete process.env.CLAUDE_CODE_USE_BEDROCK;
+    process.env.CLAUDE_CODE_USE_VERTEX = "1";
+    process.env.OPENAI_API_KEY = "sk-test-key";
+    expect(getAPIProvider()).toBe("vertex");
+  });
+
+  test("foundry takes precedence over openai", () => {
+    delete process.env.CLAUDE_CODE_USE_BEDROCK;
+    delete process.env.CLAUDE_CODE_USE_VERTEX;
+    process.env.CLAUDE_CODE_USE_FOUNDRY = "1";
+    process.env.OPENAI_API_KEY = "sk-test-key";
+    expect(getAPIProvider()).toBe("foundry");
   });
 });
 

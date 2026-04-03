@@ -1,6 +1,7 @@
 import { getSettings_DEPRECATED } from '../settings/settings.js'
 import { isModelAlias, isModelFamilyAlias } from './aliases.js'
 import { parseUserSpecifiedModel } from './model.js'
+import { getAPIProvider } from './providers.js'
 import { resolveOverriddenModel } from './modelStrings.js'
 
 /**
@@ -98,6 +99,12 @@ function familyHasSpecificEntries(
  * 3. Full model IDs ("claude-opus-4-5-20251101") — exact match only
  */
 export function isModelAllowed(model: string): boolean {
+  // When using an OpenAI-compatible provider, any model name is valid —
+  // the provider itself decides which models are available.
+  if (getAPIProvider() === 'openai') {
+    return true
+  }
+
   const settings = getSettings_DEPRECATED() || {}
   const { availableModels } = settings
   if (!availableModels) {

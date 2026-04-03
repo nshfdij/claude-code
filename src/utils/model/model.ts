@@ -35,7 +35,12 @@ export type ModelName = string
 export type ModelSetting = ModelName | ModelAlias | null
 
 export function getSmallFastModel(): ModelName {
-  return process.env.ANTHROPIC_SMALL_FAST_MODEL || getDefaultHaikuModel()
+  // Allow an OpenAI-specific override for the small fast model as well
+  return (
+    process.env.ANTHROPIC_SMALL_FAST_MODEL ||
+    (getAPIProvider() === 'openai' ? process.env.OPENAI_MODEL || 'gpt-4o-mini' : null) ||
+    getDefaultHaikuModel()
+  )
 }
 
 export function isNonCustomOpusModel(model: ModelName): boolean {
@@ -67,7 +72,13 @@ export function getUserSpecifiedModelSetting(): ModelSetting | undefined {
     specifiedModel = modelOverride
   } else {
     const settings = getSettings_DEPRECATED() || {}
-    specifiedModel = process.env.ANTHROPIC_MODEL || settings.model || undefined
+    // OPENAI_MODEL is a convenience alias when using an OpenAI-compatible provider;
+    // ANTHROPIC_MODEL retains the highest env-var priority for backwards compat.
+    specifiedModel =
+      process.env.ANTHROPIC_MODEL ||
+      process.env.OPENAI_MODEL ||
+      settings.model ||
+      undefined
   }
 
   // Ignore the user-specified model if it's not in the availableModels allowlist.
@@ -177,6 +188,11 @@ export function getRuntimeMainLoopModel(params: {
  * @returns The default model setting to use
  */
 export function getDefaultMainLoopModelSetting(): ModelName | ModelAlias {
+  // For OpenAI-compatible providers, use OPENAI_MODEL or fall back to gpt-4o-mini
+  if (getAPIProvider() === 'openai') {
+    return process.env.OPENAI_MODEL || 'gpt-4o-mini'
+  }
+
   // Ants default to defaultModel from flag config, or Opus 1M if not configured
   if (process.env.USER_TYPE === 'ant') {
     return (
