@@ -529,7 +529,7 @@ function OAuthStatusMessage(t0) {
       {
         let t1;
         if ($[51] === Symbol.for("react.memo_cache_sentinel")) {
-          t1 = <Box flexDirection="column" gap={1} marginTop={1}><Text bold={true}>OpenAI-compatible provider</Text><Box flexDirection="column" gap={1}><Text>Make sure OPENAI_API_KEY (and optionally OPENAI_BASE_URL) are set, then press Enter to continue.</Text><Box marginTop={1}><Text dimColor={true}>See <Text bold={true}>docs/openai-compatible.md</Text> for full setup instructions.</Text></Box><Box marginTop={1}><Text dimColor={true}>Press <Text bold={true}>Enter</Text> to continue.</Text></Box></Box></Box>;
+          t1 = <Box flexDirection="column" gap={1} marginTop={1}><Text bold={true}>OpenAI-compatible provider</Text><Box flexDirection="column" gap={1}><Text>Make sure OPENAI_API_KEY (and optionally OPENAI_BASE_URL) are set before proceeding.</Text><Box marginTop={1}><Text dimColor={true}>See <Text bold={true}>docs/openai-compatible.md</Text> for full setup instructions.</Text></Box><Box marginTop={1}><Text dimColor={true}>Press <Text bold={true}>Enter</Text> to continue.</Text></Box></Box></Box>;
           $[51] = t1;
         } else {
           t1 = $[51];
