@@ -30,6 +30,9 @@ type OAuthStatus = {
   state: 'platform_setup';
 } // Show platform setup info (Bedrock/Vertex/Foundry)
 | {
+  state: 'openai_provider';
+} // OpenAI-compatible provider selected, ready to proceed
+| {
   state: 'ready_to_start';
 } // Flow started, waiting for browser to open
 | {
@@ -127,6 +130,15 @@ export function ConsoleOAuthFlow({
   }, {
     context: 'Confirmation',
     isActive: oauthStatus.state === 'platform_setup'
+  });
+
+  // Handle Enter to proceed with OpenAI-compatible provider
+  useKeybinding('confirm:yes', () => {
+    logEvent('tengu_oauth_openai_provider', {});
+    onDone();
+  }, {
+    context: 'Confirmation',
+    isActive: oauthStatus.state === 'openai_provider'
   });
 
   // Handle Enter to retry on error state
@@ -345,7 +357,7 @@ type OAuthStatusMessageProps = {
   setLoginWithClaudeAi: (value: boolean) => void;
 };
 function OAuthStatusMessage(t0) {
-  const $ = _c(51);
+  const $ = _c(52);
   const {
     oauthStatus,
     mode,
@@ -405,6 +417,9 @@ function OAuthStatusMessage(t0) {
           t6 = [t4, t5, {
             label: <Text>3rd-party platform ·{" "}<Text dimColor={true}>Amazon Bedrock, Microsoft Foundry, or Vertex AI</Text>{"\n"}</Text>,
             value: "platform"
+          }, {
+            label: <Text>OpenAI-compatible provider ·{" "}<Text dimColor={true}>OPENAI_API_KEY + OPENAI_BASE_URL</Text>{"\n"}</Text>,
+            value: "openai"
           }];
           $[5] = t6;
         } else {
@@ -417,6 +432,11 @@ function OAuthStatusMessage(t0) {
                 logEvent("tengu_oauth_platform_selected", {});
                 setOAuthStatus({
                   state: "platform_setup"
+                });
+              } else if (value_0 === "openai") {
+                logEvent("tengu_oauth_openai_selected", {});
+                setOAuthStatus({
+                  state: "openai_provider"
                 });
               } else {
                 setOAuthStatus({
@@ -460,7 +480,7 @@ function OAuthStatusMessage(t0) {
         let t2;
         let t3;
         if ($[13] === Symbol.for("react.memo_cache_sentinel")) {
-          t2 = <Text>Claude Code supports Amazon Bedrock, Microsoft Foundry, and Vertex AI. Set the required environment variables, then restart Claude Code.</Text>;
+          t2 = <Text>Claude Code supports Amazon Bedrock, Microsoft Foundry, Vertex AI, and OpenAI-compatible providers. Set the required environment variables, then restart Claude Code.</Text>;
           t3 = <Text>If you are part of an enterprise organization, contact your administrator for setup instructions.</Text>;
           $[13] = t2;
           $[14] = t3;
@@ -491,7 +511,7 @@ function OAuthStatusMessage(t0) {
         }
         let t7;
         if ($[18] === Symbol.for("react.memo_cache_sentinel")) {
-          t7 = <Box flexDirection="column" marginTop={1}>{t4}{t5}{t6}<Text>· Vertex AI:{" "}<Link url="https://code.claude.com/docs/en/google-vertex-ai">https://code.claude.com/docs/en/google-vertex-ai</Link></Text></Box>;
+          t7 = <Box flexDirection="column" marginTop={1}>{t4}{t5}{t6}<Text>· Vertex AI:{" "}<Link url="https://code.claude.com/docs/en/google-vertex-ai">https://code.claude.com/docs/en/google-vertex-ai</Link></Text><Text>· OpenAI-compatible:{" "}<Text dimColor={true}>docs/openai-compatible.md</Text></Text></Box>;
           $[18] = t7;
         } else {
           t7 = $[18];
@@ -504,6 +524,17 @@ function OAuthStatusMessage(t0) {
           t8 = $[19];
         }
         return t8;
+      }
+    case "openai_provider":
+      {
+        let t1;
+        if ($[51] === Symbol.for("react.memo_cache_sentinel")) {
+          t1 = <Box flexDirection="column" gap={1} marginTop={1}><Text bold={true}>OpenAI-compatible provider</Text><Box flexDirection="column" gap={1}><Text>Make sure OPENAI_API_KEY (and optionally OPENAI_BASE_URL) are set, then press Enter to continue.</Text><Box marginTop={1}><Text dimColor={true}>See <Text bold={true}>docs/openai-compatible.md</Text> for full setup instructions.</Text></Box><Box marginTop={1}><Text dimColor={true}>Press <Text bold={true}>Enter</Text> to continue.</Text></Box></Box></Box>;
+          $[51] = t1;
+        } else {
+          t1 = $[51];
+        }
+        return t1;
       }
     case "waiting_for_login":
       {
