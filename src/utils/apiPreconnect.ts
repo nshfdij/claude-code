@@ -32,11 +32,19 @@ export function preconnectAnthropicApi(): void {
   if (fired) return
   fired = true
 
-  // Skip if using a cloud provider — different endpoint + auth
+  // Skip if using a non-first-party provider — different endpoint + auth
   if (
     isEnvTruthy(process.env.CLAUDE_CODE_USE_BEDROCK) ||
     isEnvTruthy(process.env.CLAUDE_CODE_USE_VERTEX) ||
-    isEnvTruthy(process.env.CLAUDE_CODE_USE_FOUNDRY)
+    isEnvTruthy(process.env.CLAUDE_CODE_USE_FOUNDRY) ||
+    // OpenAI-compatible: model requests go to OPENAI_BASE_URL, not api.anthropic.com.
+    // Preconnecting to api.anthropic.com would waste a TCP/TLS handshake and
+    // confuse verbose-fetch output (users see api.anthropic.com and assume model
+    // requests also go there).
+    process.env.OPENAI_API_KEY ||
+    process.env.OPENAI_BASE_URL ||
+    process.env.OPENAI_API_BASE ||
+    process.env.API_PROVIDER?.toLowerCase() === 'openai'
   ) {
     return
   }
