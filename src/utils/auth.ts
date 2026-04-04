@@ -116,6 +116,7 @@ export function isAnthropicAuthEnabled(): boolean {
     isEnvTruthy(process.env.CLAUDE_CODE_USE_BEDROCK) ||
     isEnvTruthy(process.env.CLAUDE_CODE_USE_VERTEX) ||
     isEnvTruthy(process.env.CLAUDE_CODE_USE_FOUNDRY) ||
+    process.env.API_PROVIDER?.toLowerCase() === 'openai' ||
     !!(
       process.env.OPENAI_API_KEY ||
       process.env.OPENAI_BASE_URL ||

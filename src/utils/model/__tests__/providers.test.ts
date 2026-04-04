@@ -1,5 +1,5 @@
-import { describe, expect, test, beforeEach, afterEach } from "bun:test";
-import { getAPIProvider, isFirstPartyAnthropicBaseUrl } from "../providers";
+import { describe, expect, test, beforeEach, afterEach, spyOn } from "bun:test";
+import { getAPIProvider, isFirstPartyAnthropicBaseUrl, _resetProviderDebugFlag } from "../providers";
 
 describe("getAPIProvider", () => {
   const envKeys = [
@@ -9,11 +9,15 @@ describe("getAPIProvider", () => {
     "OPENAI_API_KEY",
     "OPENAI_BASE_URL",
     "OPENAI_API_BASE",
+    "API_PROVIDER",
+    "DEBUG_PROVIDER",
   ] as const;
   const savedEnv: Record<string, string | undefined> = {};
 
   beforeEach(() => {
     for (const key of envKeys) savedEnv[key] = process.env[key];
+    // Clear the one-time debug flag before each test
+    _resetProviderDebugFlag();
   });
 
   afterEach(() => {
@@ -151,6 +155,111 @@ describe("getAPIProvider", () => {
     process.env.CLAUDE_CODE_USE_FOUNDRY = "1";
     process.env.OPENAI_API_KEY = "sk-test-key";
     expect(getAPIProvider()).toBe("foundry");
+  });
+
+  // API_PROVIDER explicit override tests
+  test('API_PROVIDER=openai forces openai even without OPENAI_API_KEY', () => {
+    delete process.env.CLAUDE_CODE_USE_BEDROCK;
+    delete process.env.CLAUDE_CODE_USE_VERTEX;
+    delete process.env.CLAUDE_CODE_USE_FOUNDRY;
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_BASE_URL;
+    delete process.env.OPENAI_API_BASE;
+    process.env.API_PROVIDER = "openai";
+    expect(getAPIProvider()).toBe("openai");
+  });
+
+  test('API_PROVIDER=openai wins over CLAUDE_CODE_USE_BEDROCK', () => {
+    process.env.CLAUDE_CODE_USE_BEDROCK = "1";
+    process.env.API_PROVIDER = "openai";
+    // API_PROVIDER is the highest-priority explicit override
+    expect(getAPIProvider()).toBe("openai");
+  });
+
+  test('API_PROVIDER=bedrock forces bedrock', () => {
+    delete process.env.CLAUDE_CODE_USE_BEDROCK;
+    delete process.env.OPENAI_API_KEY;
+    process.env.API_PROVIDER = "bedrock";
+    expect(getAPIProvider()).toBe("bedrock");
+  });
+
+  test('API_PROVIDER=firstParty forces firstParty', () => {
+    process.env.OPENAI_API_KEY = "sk-test-key";
+    process.env.API_PROVIDER = "firstParty";
+    expect(getAPIProvider()).toBe("firstParty");
+  });
+
+  test('API_PROVIDER=anthropic is alias for firstParty', () => {
+    process.env.OPENAI_API_KEY = "sk-test-key";
+    process.env.API_PROVIDER = "anthropic";
+    expect(getAPIProvider()).toBe("firstParty");
+  });
+
+  test('API_PROVIDER is case-insensitive', () => {
+    delete process.env.OPENAI_API_KEY;
+    process.env.API_PROVIDER = "OPENAI";
+    expect(getAPIProvider()).toBe("openai");
+  });
+
+  test('unknown API_PROVIDER value falls through to auto-detection', () => {
+    delete process.env.CLAUDE_CODE_USE_BEDROCK;
+    delete process.env.CLAUDE_CODE_USE_VERTEX;
+    delete process.env.CLAUDE_CODE_USE_FOUNDRY;
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_BASE_URL;
+    delete process.env.OPENAI_API_BASE;
+    process.env.API_PROVIDER = "unknown-provider";
+    expect(getAPIProvider()).toBe("firstParty");
+  });
+
+  // DEBUG_PROVIDER logging tests
+  test('DEBUG_PROVIDER=1 logs to stderr on first call', () => {
+    delete process.env.CLAUDE_CODE_USE_BEDROCK;
+    delete process.env.CLAUDE_CODE_USE_VERTEX;
+    delete process.env.CLAUDE_CODE_USE_FOUNDRY;
+    process.env.OPENAI_API_KEY = "sk-test-key";
+    process.env.OPENAI_BASE_URL = "https://api.chatanywhere.tech/v1";
+    process.env.DEBUG_PROVIDER = "1";
+    const spy = spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const provider = getAPIProvider();
+      expect(provider).toBe("openai");
+      expect(spy).toHaveBeenCalledTimes(1);
+      const logLine = spy.mock.calls[0]?.[0] as string;
+      expect(logLine).toContain("[DEBUG_PROVIDER]");
+      expect(logLine).toContain("resolved=openai");
+      expect(logLine).toContain("OPENAI_API_KEY=(set)");
+      expect(logLine).toContain("OPENAI_BASE_URL=https://api.chatanywhere.tech/v1");
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  test('DEBUG_PROVIDER=1 only logs once across multiple calls', () => {
+    delete process.env.CLAUDE_CODE_USE_BEDROCK;
+    delete process.env.OPENAI_API_KEY;
+    process.env.DEBUG_PROVIDER = "1";
+    const spy = spyOn(console, "error").mockImplementation(() => {});
+    try {
+      getAPIProvider();
+      getAPIProvider();
+      getAPIProvider();
+      expect(spy).toHaveBeenCalledTimes(1);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  test('DEBUG_PROVIDER not set means no stderr log', () => {
+    delete process.env.DEBUG_PROVIDER;
+    delete process.env.OPENAI_API_KEY;
+    const spy = spyOn(console, "error").mockImplementation(() => {});
+    try {
+      getAPIProvider();
+      expect(spy).not.toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+    }
   });
 });
 
