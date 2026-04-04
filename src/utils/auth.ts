@@ -116,7 +116,11 @@ export function isAnthropicAuthEnabled(): boolean {
     isEnvTruthy(process.env.CLAUDE_CODE_USE_BEDROCK) ||
     isEnvTruthy(process.env.CLAUDE_CODE_USE_VERTEX) ||
     isEnvTruthy(process.env.CLAUDE_CODE_USE_FOUNDRY) ||
-    !!(process.env.OPENAI_API_KEY || process.env.OPENAI_BASE_URL)
+    !!(
+      process.env.OPENAI_API_KEY ||
+      process.env.OPENAI_BASE_URL ||
+      process.env.OPENAI_API_BASE
+    )
 
   // Check if user has configured an external API key source
   // This allows externally-provided API keys to work (without requiring proxy configuration)
@@ -1736,7 +1740,8 @@ export function isUsing3PServices(): boolean {
     isEnvTruthy(process.env.CLAUDE_CODE_USE_VERTEX) ||
     isEnvTruthy(process.env.CLAUDE_CODE_USE_FOUNDRY) ||
     process.env.OPENAI_API_KEY ||
-    process.env.OPENAI_BASE_URL
+    process.env.OPENAI_BASE_URL ||
+    process.env.OPENAI_API_BASE
   )
 }
 
