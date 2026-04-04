@@ -17,9 +17,9 @@ export type APIProvider = 'firstParty' | 'bedrock' | 'vertex' | 'foundry' | 'ope
  */
 export function getAPIProvider(): APIProvider {
   // 1. Explicit override wins.
-  const explicitProvider = process.env.API_PROVIDER?.toLowerCase()
-  if (explicitProvider) {
-    switch (explicitProvider) {
+  const apiProviderEnv = process.env.API_PROVIDER?.toLowerCase()
+  if (apiProviderEnv) {
+    switch (apiProviderEnv) {
       case 'openai':
         return _debugProvider('openai', 'API_PROVIDER=openai')
       case 'bedrock':

@@ -225,7 +225,7 @@ describe("getAPIProvider", () => {
       const provider = getAPIProvider();
       expect(provider).toBe("openai");
       expect(spy).toHaveBeenCalledTimes(1);
-      const logLine = spy.mock.calls[0]?.[0] as string;
+      const logLine = String(spy.mock.calls[0]?.[0]);
       expect(logLine).toContain("[DEBUG_PROVIDER]");
       expect(logLine).toContain("resolved=openai");
       expect(logLine).toContain("OPENAI_API_KEY=(set)");

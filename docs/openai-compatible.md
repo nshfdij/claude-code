@@ -136,8 +136,8 @@ requests to Anthropic services (MCP server registry, background telemetry,
 etc.) regardless of the configured provider.  These are **not** the model/chat
 requests — they use different endpoints and do not carry your messages.
 
-The important thing is that the `/chat/completions` POST goes to your
-`OPENAI_BASE_URL`.  Enable `BUN_CONFIG_VERBOSE_FETCH=1` and look for a POST
+The important thing is that the model `POST` request goes to your
+`OPENAI_BASE_URL` host (e.g. `https://api.chatanywhere.tech`).  Enable `BUN_CONFIG_VERBOSE_FETCH=1` and look for a POST
 to your base URL host after you send a message.
 
 ### How do I confirm which provider is actually selected?
