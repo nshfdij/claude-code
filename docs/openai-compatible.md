@@ -26,6 +26,7 @@ This lets you point the tool at any provider that speaks the OpenAI
 |---|---|---|
 | `OPENAI_API_KEY` | **Yes** (unless the endpoint has no auth) | API key sent as `Authorization: Bearer <key>` |
 | `OPENAI_BASE_URL` | No (defaults to `https://api.openai.com/v1`) | Base URL of the provider |
+| `OPENAI_API_BASE` | No | Alias for `OPENAI_BASE_URL` (either can be used) |
 | `OPENAI_MODEL` | No (defaults to `gpt-4o-mini`) | Model to use — passed through to the provider unchanged |
 
 You can also use the existing `ANTHROPIC_MODEL` env var or the `--model` CLI
@@ -36,6 +37,7 @@ flag to specify the model; `OPENAI_MODEL` is just a convenience alias.
 ```bash
 export OPENAI_API_KEY="sk-your-key"
 export OPENAI_BASE_URL="https://api.chatanywhere.tech/v1"
+# or: export OPENAI_API_BASE="https://api.chatanywhere.tech/v1"
 export OPENAI_MODEL="gpt-4o-mini"
 
 bun run dev
@@ -43,8 +45,9 @@ bun run dev
 node dist/cli.js
 ```
 
-Claude Code will automatically detect the `OPENAI_API_KEY` / `OPENAI_BASE_URL`
-environment variables and switch to the OpenAI-compatible provider.
+Claude Code automatically detects the `OPENAI_API_KEY` / `OPENAI_BASE_URL` /
+`OPENAI_API_BASE` environment variables and switches to the OpenAI-compatible
+provider.  No additional `API_PROVIDER` variable is needed.
 
 ### 3. Using a local Ollama server
 
@@ -73,8 +76,9 @@ this way without any special configuration.
 
 ## How it works
 
-When either `OPENAI_API_KEY` or `OPENAI_BASE_URL` is present (and no higher-
-priority Bedrock / Vertex / Foundry flag is set), Claude Code:
+When either `OPENAI_API_KEY`, `OPENAI_BASE_URL`, or `OPENAI_API_BASE` is
+present (and no higher-priority Bedrock / Vertex / Foundry flag is set),
+Claude Code:
 
 1. Sets the **provider** to `openai` internally.
 2. Skips Anthropic-specific features: prompt caching, extended thinking, beta
@@ -96,6 +100,7 @@ priority Bedrock / Vertex / Foundry flag is set), Claude Code:
 # ── OpenAI-compatible ──────────────────────────────────────────────────────
 OPENAI_API_KEY=sk-...          # API key
 OPENAI_BASE_URL=https://...    # Base URL (default: https://api.openai.com/v1)
+OPENAI_API_BASE=https://...    # Alias for OPENAI_BASE_URL (either can be used)
 OPENAI_MODEL=gpt-4o-mini       # Model (default: gpt-4o-mini)
 
 # ── Anthropic first-party ──────────────────────────────────────────────────
@@ -113,7 +118,7 @@ CLAUDE_CODE_USE_FOUNDRY=1
 ```
 
 **Priority** (highest → lowest when multiple are set):
-`bedrock` → `vertex` → `foundry` → `openai` → `firstParty`
+`bedrock` → `vertex` → `foundry` → `openai` (`OPENAI_API_KEY` / `OPENAI_BASE_URL` / `OPENAI_API_BASE`) → `firstParty`
 
 ---
 

@@ -155,7 +155,9 @@ export async function getAnthropicClient({
   // OpenAI-compatible provider (detected via OPENAI_API_KEY / OPENAI_BASE_URL)
   if (getAPIProvider() === 'openai') {
     const oaiBaseURL =
-      process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1'
+      process.env.OPENAI_BASE_URL ||
+      process.env.OPENAI_API_BASE ||
+      'https://api.openai.com/v1'
     const oaiApiKey = process.env.OPENAI_API_KEY || ''
     logForDebugging(
       `[API:openai] Using OpenAI-compatible endpoint: ${oaiBaseURL}`,

@@ -8,6 +8,7 @@ describe("getAPIProvider", () => {
     "CLAUDE_CODE_USE_FOUNDRY",
     "OPENAI_API_KEY",
     "OPENAI_BASE_URL",
+    "OPENAI_API_BASE",
   ] as const;
   const savedEnv: Record<string, string | undefined> = {};
 
@@ -31,6 +32,7 @@ describe("getAPIProvider", () => {
     delete process.env.CLAUDE_CODE_USE_FOUNDRY;
     delete process.env.OPENAI_API_KEY;
     delete process.env.OPENAI_BASE_URL;
+    delete process.env.OPENAI_API_BASE;
     expect(getAPIProvider()).toBe("firstParty");
   });
 
@@ -70,6 +72,7 @@ describe("getAPIProvider", () => {
   test('"0" is not truthy', () => {
     delete process.env.OPENAI_API_KEY;
     delete process.env.OPENAI_BASE_URL;
+    delete process.env.OPENAI_API_BASE;
     process.env.CLAUDE_CODE_USE_BEDROCK = "0";
     expect(getAPIProvider()).toBe("firstParty");
   });
@@ -77,6 +80,7 @@ describe("getAPIProvider", () => {
   test('empty string is not truthy', () => {
     delete process.env.OPENAI_API_KEY;
     delete process.env.OPENAI_BASE_URL;
+    delete process.env.OPENAI_API_BASE;
     process.env.CLAUDE_CODE_USE_BEDROCK = "";
     expect(getAPIProvider()).toBe("firstParty");
   });
@@ -105,6 +109,26 @@ describe("getAPIProvider", () => {
     delete process.env.CLAUDE_CODE_USE_FOUNDRY;
     process.env.OPENAI_API_KEY = "sk-test-key";
     process.env.OPENAI_BASE_URL = "https://api.chatanywhere.tech/v1";
+    expect(getAPIProvider()).toBe("openai");
+  });
+
+  test('returns "openai" when OPENAI_API_BASE is set (alias for OPENAI_BASE_URL)', () => {
+    delete process.env.CLAUDE_CODE_USE_BEDROCK;
+    delete process.env.CLAUDE_CODE_USE_VERTEX;
+    delete process.env.CLAUDE_CODE_USE_FOUNDRY;
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_BASE_URL;
+    process.env.OPENAI_API_BASE = "https://api.chatanywhere.tech/v1";
+    expect(getAPIProvider()).toBe("openai");
+  });
+
+  test('returns "openai" when OPENAI_API_KEY and OPENAI_API_BASE are set', () => {
+    delete process.env.CLAUDE_CODE_USE_BEDROCK;
+    delete process.env.CLAUDE_CODE_USE_VERTEX;
+    delete process.env.CLAUDE_CODE_USE_FOUNDRY;
+    process.env.OPENAI_API_KEY = "sk-test-key";
+    delete process.env.OPENAI_BASE_URL;
+    process.env.OPENAI_API_BASE = "https://api.chatanywhere.tech/v1";
     expect(getAPIProvider()).toBe("openai");
   });
 
